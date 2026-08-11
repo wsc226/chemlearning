@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import type { Question, AssessmentMode } from '@/lib/questions';
 import type { GradeResult } from '@/lib/grading';
+import { logAnswer } from '@/lib/quizLog';
 import QuestionCard from '@/components/QuestionCard';
 import ResultCard from '@/components/ResultCard';
 import SummaryScreen from '@/components/SummaryScreen';
@@ -56,6 +57,19 @@ export default function QuizShell({
       const result = question.grade(answer);
       const record: AnswerRecord = { question, userAnswer: answer, result };
 
+      // Persist to answer log (localStorage) for weekly review
+      logAnswer({
+        ts: new Date().toISOString(),
+        type: question.type,
+        prompt: question.prompt,
+        instruction: question.instruction,
+        answer,
+        correct: result.correct,
+        expected: question.correctDisplay,
+        feedback: result.feedback,
+        voice: voiceMode,
+      });
+
       setAnswers((prev) => [...prev, record]);
 
       if (mode === 'immediate') {
@@ -72,7 +86,7 @@ export default function QuizShell({
         }
       }
     },
-    [currentIndex, isLastQuestion, mode, questions],
+    [currentIndex, isLastQuestion, mode, questions, voiceMode],
   );
 
   // -------------------------------------------

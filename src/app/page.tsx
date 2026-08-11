@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import QuizSetup from '@/components/QuizSetup';
 import type { QuizConfig } from '@/components/QuizSetup';
 import QuizShell from '@/components/QuizShell';
+import AnswerLog from '@/components/AnswerLog';
 import {
   generateElementQuestions,
   generateIonChargeQuestions,
@@ -147,6 +148,9 @@ export default function Home() {
           </div>
         </button>
       </div>
+
+      {/* Answer Log (appears after quiz entries accumulate) */}
+      <AnswerLog />
 
       {/* Footer */}
       <p className="text-xs text-chem-text-muted mt-10 text-center">

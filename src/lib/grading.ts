@@ -258,37 +258,50 @@ function parseElementSequence(letters: string): string[] | null {
 }
 
 /**
- * Experimental parser for formula + charge answers (polyatomic anions).
+ * Build the set of normalized answer strings that should be accepted
+ * for a given polyatomic-ion formula + charge.
  *
- * Handles both dictation ("s o 4 2 minus") and typed ("SO4 2-", "SO4 2 minus") input.
- * Splits mixed letter/digit tokens (e.g. "po3" → ["po","3"]), then maps letter
- * sequences to element symbols via greedy matching.
- *
- * Per ARCHITECTURE.md: recommend testing against real on-device dictation before
- * relying heavily on this — accuracy is unverified for spoken-letter sequences.
+ * Handles:
+ *   - Explicit magnitude: "no3 1 minus"
+ *   - Implicit magnitude 1: "no3 minus" (when charge is ±1)
+ *   - Concatenated subscript + charge: "co32 minus" for CO3 2−
+ *   - Sign-first order: "no3 minus 1"
+ *   - Both sign-word variants: "minus" / "negative", "plus" / "positive"
  */
-export function parseFormulaChargeAnswer(
-  transcript: string,
-  expectedFormula: string,
-  expectedCharge: number,
-): boolean {
-  const processed = preProcessChargeSymbols(transcript);
-  const normalized = normalize(processed);
+function buildAcceptedAnswers(formula: string, charge: number): Set<string> {
+  const fl = formula.toLowerCase();
+  const magnitude = Math.abs(charge);
+  const signWords =
+    charge > 0 ? ['plus', 'positive'] : ['minus', 'negative'];
+  const accepted = new Set<string>();
 
-  // Split into tokens, then sub-tokenize mixed letter/digit tokens
-  const rawTokens = normalized.split(/\s+/).filter(Boolean);
-  const tokens: string[] = [];
-  for (const t of rawTokens) {
-    if (/[a-z]/.test(t) && /\d/.test(t)) {
-      // Split on letter/digit boundaries: "po3" → ["po", "3"]
-      const parts = t.match(/[a-z]+|\d+/g);
-      if (parts) tokens.push(...parts);
-      else tokens.push(t);
-    } else {
-      tokens.push(t);
+  for (const sw of signWords) {
+    // "no3 1 minus"
+    accepted.add(`${fl} ${magnitude} ${sw}`);
+    // "no31 minus" — subscript + charge magnitude concatenated
+    accepted.add(`${fl}${magnitude} ${sw}`);
+    // Sign-first: "no3 minus 1"
+    accepted.add(`${fl} ${sw} ${magnitude}`);
+    if (magnitude === 1) {
+      // Implicit 1: "no3 minus"
+      accepted.add(`${fl} ${sw}`);
     }
   }
+  return accepted;
+}
 
+/**
+ * Parse dictation-style tokens into a formula string and charge value.
+ *
+ * When `greedyCharge` is true, a digit token immediately before a sign word
+ * is treated as the charge magnitude.  When false, all digits before the
+ * first sign word are treated as subscripts and the charge magnitude comes
+ * from any digit after the sign word (defaulting to 1).
+ */
+function parseDictatedTokens(
+  tokens: string[],
+  greedyCharge: boolean,
+): { formula: string; charge: number | null } {
   const formulaParts: string[] = [];
   const chargeTokens: string[] = [];
   let inCharge = false;
@@ -310,13 +323,11 @@ export function parseFormulaChargeAnswer(
 
     // Pure letter token — try as element symbol(s)
     if (/^[a-z]+$/.test(token)) {
-      // Direct dictation lookup first (handles "oh"→O, "see"→C, etc.)
       const directSymbol = DICTATION_TO_SYMBOL[token];
       if (directSymbol) {
         formulaParts.push(directSymbol);
         continue;
       }
-      // Try greedy element-sequence parse (handles typed "po"→P,O  "clo"→Cl,O)
       const elements = parseElementSequence(token);
       if (elements) {
         formulaParts.push(...elements);
@@ -329,18 +340,20 @@ export function parseFormulaChargeAnswer(
     // Digit token
     const asDigit = parseInt(token, 10);
     if (!isNaN(asDigit) && asDigit >= 0 && asDigit <= 9) {
-      // Peek ahead: if next token is a sign word, this digit starts the charge
-      const nextToken = tokens[i + 1];
-      if (
-        nextToken &&
-        (SIGN_WORDS_POSITIVE.has(nextToken) ||
-          SIGN_WORDS_NEGATIVE.has(nextToken))
-      ) {
-        inCharge = true;
-        chargeTokens.push(token);
-        continue;
+      if (greedyCharge) {
+        // Peek ahead: if next token is a sign word, this digit starts the charge
+        const nextToken = tokens[i + 1];
+        if (
+          nextToken &&
+          (SIGN_WORDS_POSITIVE.has(nextToken) ||
+            SIGN_WORDS_NEGATIVE.has(nextToken))
+        ) {
+          inCharge = true;
+          chargeTokens.push(token);
+          continue;
+        }
       }
-      // Otherwise treat as subscript
+      // Treat as subscript
       formulaParts.push(String(asDigit));
       continue;
     }
@@ -352,9 +365,75 @@ export function parseFormulaChargeAnswer(
     ? parseChargeAnswer(chargeTranscript)
     : null;
 
-  if (parsedFormula !== expectedFormula) return false;
-  if (parsedCharge === null || parsedCharge !== expectedCharge) return false;
-  return true;
+  return { formula: parsedFormula, charge: parsedCharge };
+}
+
+/**
+ * Parser for formula + charge answers (polyatomic anions).
+ *
+ * Two-strategy approach:
+ *   1. **Canonical string matching** — builds normalized accepted-answer strings
+ *      from the expected formula + charge and compares directly.  Handles
+ *      implicit magnitude-1, concatenated subscript+charge digits ("CO32 minus"
+ *      → CO3 2−), 0/O confusion, and SR-inserted spaces.
+ *   2. **Dictation-aware parser** — maps spoken words ("es oh four") to element
+ *      symbols via lookup table, then tries both "greedy charge" (digit before
+ *      sign → charge magnitude) and "subscript" (digit before sign → subscript)
+ *      interpretations.
+ *
+ * Accepts if either strategy produces a match against the expected answer.
+ */
+export function parseFormulaChargeAnswer(
+  transcript: string,
+  expectedFormula: string,
+  expectedCharge: number,
+): boolean {
+  const processed = preProcessChargeSymbols(transcript);
+  const normalized = normalize(processed);
+
+  // --- Strategy 1: Canonical string matching ---
+  const accepted = buildAcceptedAnswers(expectedFormula, expectedCharge);
+
+  // Direct match
+  if (accepted.has(normalized)) return true;
+
+  // Spaceless match — handles SR splitting letters ("n o 3 minus" → "no3minus")
+  const spaceless = normalized.replace(/\s/g, '');
+  for (const a of accepted) {
+    if (spaceless === a.replace(/\s/g, '')) return true;
+  }
+
+  // 0→O substitution (SR sometimes renders letter O as digit 0)
+  const zeroFixed = normalized.replace(/0/g, 'o');
+  if (accepted.has(zeroFixed)) return true;
+  const spacelessZero = zeroFixed.replace(/\s/g, '');
+  for (const a of accepted) {
+    if (spacelessZero === a.replace(/\s/g, '')) return true;
+  }
+
+  // --- Strategy 2: Dictation-aware parser ---
+  const rawTokens = normalized.split(/\s+/).filter(Boolean);
+  const tokens: string[] = [];
+  for (const t of rawTokens) {
+    if (/[a-z]/.test(t) && /\d/.test(t)) {
+      // Split on letter/digit boundaries: "po3" → ["po", "3"]
+      const parts = t.match(/[a-z]+|\d+/g);
+      if (parts) tokens.push(...parts);
+      else tokens.push(t);
+    } else {
+      tokens.push(t);
+    }
+  }
+
+  // Try greedy-charge interpretation (digit before sign word → charge magnitude)
+  const r1 = parseDictatedTokens(tokens, true);
+  if (r1.formula === expectedFormula && r1.charge === expectedCharge) return true;
+
+  // Try subscript interpretation (digit before sign word → subscript, charge = ±1)
+  const r2 = parseDictatedTokens(tokens, false);
+  if (r2.formula === expectedFormula && r2.charge === expectedCharge) return true;
+
+  return false;
 }
 
 // ---------------------------------------------------------------------------

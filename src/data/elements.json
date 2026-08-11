@@ -1,0 +1,41 @@
+{
+  "_note": "v1 scope: first 20 elements (atomic numbers 1-20). Your list had 'Na' listed twice in a row (positions 11 and 19) — position 19 is almost certainly a copy/paste slip, since the standard sequence after Ar (18) is K, Ca (19, 20), not Na again. Corrected to K (potassium) below. Flagging this so you can confirm.",
+  "elements": [
+    { "symbol": "H",  "name": "hydrogen",  "atomicNumber": 1,  "aliases": [], "funFact": null },
+    { "symbol": "He", "name": "helium",    "atomicNumber": 2,  "aliases": [], "funFact": null },
+    { "symbol": "Li", "name": "lithium",   "atomicNumber": 3,  "aliases": [], "funFact": null },
+    { "symbol": "Be", "name": "beryllium", "atomicNumber": 4,  "aliases": [], "funFact": null },
+    { "symbol": "B",  "name": "boron",     "atomicNumber": 5,  "aliases": [], "funFact": null },
+    { "symbol": "C",  "name": "carbon",    "atomicNumber": 6,  "aliases": [], "funFact": null },
+    { "symbol": "N",  "name": "nitrogen",  "atomicNumber": 7,  "aliases": [], "funFact": null },
+    { "symbol": "O",  "name": "oxygen",    "atomicNumber": 8,  "aliases": [], "funFact": null },
+    { "symbol": "F",  "name": "fluorine",  "atomicNumber": 9,  "aliases": [], "funFact": null },
+    { "symbol": "Ne", "name": "neon",      "atomicNumber": 10, "aliases": [], "funFact": null },
+    {
+      "symbol": "Na",
+      "name": "sodium",
+      "atomicNumber": 11,
+      "aliases": [],
+      "funFact": "Symbol comes from the Latin 'natrium,' named after natron, a naturally occurring sodium-carbonate mineral used since antiquity — not from the English name 'sodium.'"
+    },
+    { "symbol": "Mg", "name": "magnesium", "atomicNumber": 12, "aliases": [], "funFact": null },
+    { "symbol": "Al", "name": "aluminum",  "atomicNumber": 13, "aliases": ["aluminium"], "funFact": null },
+    { "symbol": "Si", "name": "silicon",   "atomicNumber": 14, "aliases": [], "funFact": null },
+    { "symbol": "P",  "name": "phosphorus","atomicNumber": 15, "aliases": [], "funFact": null },
+    { "symbol": "S",  "name": "sulfur",    "atomicNumber": 16, "aliases": ["sulphur"], "funFact": null },
+    { "symbol": "Cl", "name": "chlorine",  "atomicNumber": 17, "aliases": [], "funFact": null },
+    { "symbol": "Ar", "name": "argon",     "atomicNumber": 18, "aliases": [], "funFact": null },
+    {
+      "symbol": "K",
+      "name": "potassium",
+      "atomicNumber": 19,
+      "aliases": [],
+      "funFact": "Symbol comes from the Latin 'kalium,' from the Arabic 'al-qalyah' (plant ashes), which potassium salts were historically extracted from — not from the English name 'potassium.' (Corrected from the list's repeated 'Na' — see _note above.)"
+    },
+    { "symbol": "Ca", "name": "calcium",   "atomicNumber": 20, "aliases": [], "funFact": null }
+  ],
+  "_deferredForLaterPhase": {
+    "note": "Remaining elements from your full list, not built out yet — symbols/order preserved for when this phase starts. Elements needing a 'symbol differs from name' fact later: Fe (ferrum), Cu (cuprum), Ag (argentum), Sn (stannum), Sb (stibium), Au (aurum), Hg (hydrargyrum), Pb (plumbum).",
+    "symbols": ["Cr","Mn","Fe","Co","Ni","Cu","Zn","As","Br","Kr","Rb","Sr","Pd","Ag","Cd","Sn","Sb","I","Xe","Cs","Ba","Pt","Au","Hg","Pb","Bi","Rn","Fr","Ra","Th","U","Pu"]
+  }
+}

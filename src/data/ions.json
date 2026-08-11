@@ -1,0 +1,93 @@
+{
+  "_schema": {
+    "category": "cation | monoatomic_anion | polyatomic_anion",
+    "questionMode": "charge_only (cations + monoatomic ions) | formula_and_charge, occasionally charge_only (polyatomic anions)",
+    "charge": "signed integer, e.g. 3 means 3+, -2 means 2-"
+  },
+
+  "cations": [
+    { "name": "Lithium ion",    "formula": "Li",  "charge": 1, "group": "1 (alkali metal, fixed charge)" },
+    { "name": "Sodium ion",     "formula": "Na",  "charge": 1, "group": "1 (alkali metal, fixed charge)" },
+    { "name": "Potassium ion",  "formula": "K",   "charge": 1, "group": "1 (alkali metal, fixed charge)" },
+    { "name": "Rubidium ion",   "formula": "Rb",  "charge": 1, "group": "1 (alkali metal, fixed charge)" },
+    { "name": "Cesium ion",     "formula": "Cs",  "charge": 1, "group": "1 (alkali metal, fixed charge)", "aliases": ["caesium ion", "caesium"] },
+    { "name": "Francium ion",   "formula": "Fr",  "charge": 1, "group": "1 (alkali metal, fixed charge)" },
+
+    { "name": "Beryllium ion",  "formula": "Be",  "charge": 2, "group": "2 (alkaline earth, fixed charge)" },
+    { "name": "Magnesium ion",  "formula": "Mg",  "charge": 2, "group": "2 (alkaline earth, fixed charge)" },
+    { "name": "Calcium ion",    "formula": "Ca",  "charge": 2, "group": "2 (alkaline earth, fixed charge)" },
+    { "name": "Strontium ion",  "formula": "Sr",  "charge": 2, "group": "2 (alkaline earth, fixed charge)" },
+    { "name": "Barium ion",     "formula": "Ba",  "charge": 2, "group": "2 (alkaline earth, fixed charge)" },
+    { "name": "Radium ion",     "formula": "Ra",  "charge": 2, "group": "2 (alkaline earth, fixed charge)" },
+
+    { "name": "Aluminum ion",   "formula": "Al",  "charge": 3, "group": "13 (fixed charge)", "aliases": ["aluminium ion", "aluminium"] },
+
+    { "name": "Ammonium ion",   "formula": "NH4", "charge": 1, "group": "polyatomic cation (fixed charge)" },
+    { "name": "Hydronium ion",  "formula": "H3O", "charge": 1, "group": "polyatomic cation (fixed charge)" },
+
+    { "name": "Antimony (III) ion", "formula": "Sb", "charge": 3, "group": "transition/post-transition (variable charge)" },
+    { "name": "Antimony (V) ion",   "formula": "Sb", "charge": 5, "group": "transition/post-transition (variable charge)" },
+    { "name": "Bismuth ion",        "formula": "Bi", "charge": 3, "group": "transition/post-transition (variable charge)" },
+    { "name": "Cadmium ion",        "formula": "Cd", "charge": 2, "group": "transition/post-transition (variable charge)" },
+    { "name": "Chromium (II) ion",  "formula": "Cr", "charge": 2, "group": "transition (variable charge)" },
+    { "name": "Chromium (III) ion", "formula": "Cr", "charge": 3, "group": "transition (variable charge)" },
+    { "name": "Copper (I) ion",     "formula": "Cu", "charge": 1, "group": "transition (variable charge)" },
+    { "name": "Copper (II) ion",    "formula": "Cu", "charge": 2, "group": "transition (variable charge)" },
+    { "name": "Iron (II) ion",      "formula": "Fe", "charge": 2, "group": "transition (variable charge)" },
+    { "name": "Iron (III) ion",     "formula": "Fe", "charge": 3, "group": "transition (variable charge)" },
+    { "name": "Lead (II) ion",      "formula": "Pb", "charge": 2, "group": "transition/post-transition (variable charge)" },
+    { "name": "Lead (IV) ion",      "formula": "Pb", "charge": 4, "group": "transition/post-transition (variable charge)" },
+    { "name": "Manganese (II) ion", "formula": "Mn", "charge": 2, "group": "transition (variable charge)" },
+    { "name": "Manganese (IV) ion", "formula": "Mn", "charge": 4, "group": "transition (variable charge)" },
+    {
+      "name": "Mercury (I) ion", "formula": "Hg2", "charge": 2, "group": "transition (variable charge)",
+      "funFact": "The classic memorization trap: mercury(I) isn't a single Hg+ ion, it's a diatomic pair Hg2^2+ — two mercury atoms bonded together sharing an overall 2+ charge."
+    },
+    { "name": "Mercury (II) ion",   "formula": "Hg", "charge": 2, "group": "transition (variable charge)" },
+    { "name": "Nickel ion",         "formula": "Ni", "charge": 2, "group": "transition (variable charge)" },
+    { "name": "Silver ion",         "formula": "Ag", "charge": 1, "group": "transition (fixed charge)" },
+    { "name": "Tin (II) ion",       "formula": "Sn", "charge": 2, "group": "transition/post-transition (variable charge)" },
+    { "name": "Tin (IV) ion",       "formula": "Sn", "charge": 4, "group": "transition/post-transition (variable charge)" },
+    { "name": "Zinc ion",           "formula": "Zn", "charge": 2, "group": "transition (fixed charge)" }
+  ],
+
+  "monoatomicAnions": [
+    { "name": "Carbide ion",   "formula": "C",  "charge": -4 },
+    { "name": "Bromide ion",   "formula": "Br", "charge": -1 },
+    { "name": "Chloride ion",  "formula": "Cl", "charge": -1 },
+    { "name": "Fluoride ion",  "formula": "F",  "charge": -1 },
+    { "name": "Hydride ion",   "formula": "H",  "charge": -1 },
+    { "name": "Oxide ion",     "formula": "O",  "charge": -2 },
+    { "name": "Iodide ion",    "formula": "I",  "charge": -1 },
+    { "name": "Nitride ion",   "formula": "N",  "charge": -3 },
+    { "name": "Phosphide ion", "formula": "P",  "charge": -3 },
+    { "name": "Sulfide ion",   "formula": "S",  "charge": -2, "aliases": ["sulphide ion", "sulphide"] }
+  ],
+
+  "polyatomicAnions": [
+    { "name": "Acetate ion",             "formula": "C2H3O2", "charge": -1 },
+    { "name": "Oxalate ion",             "formula": "C2O4",   "charge": -2 },
+    { "name": "Cyanide ion",             "formula": "CN",     "charge": -1 },
+    { "name": "Carbonate ion",           "formula": "CO3",    "charge": -2 },
+    { "name": "Hydrogen carbonate ion",  "formula": "HCO3",   "charge": -1, "aliases": ["bicarbonate ion", "bicarbonate"] },
+    { "name": "Borate ion",              "formula": "BO3",    "charge": -3 },
+    { "name": "Bromate ion",             "formula": "BrO3",   "charge": -1 },
+    { "name": "Perchlorate ion",         "formula": "ClO4",   "charge": -1 },
+    { "name": "Chlorate ion",            "formula": "ClO3",   "charge": -1 },
+    { "name": "Chlorite ion",            "formula": "ClO2",   "charge": -1 },
+    { "name": "Hypochlorite ion",        "formula": "ClO",    "charge": -1 },
+    { "name": "Chromate ion",            "formula": "CrO4",   "charge": -2 },
+    { "name": "Dichromate ion",          "formula": "Cr2O7",  "charge": -2 },
+    { "name": "Hydroxide ion",           "formula": "OH",     "charge": -1 },
+    { "name": "Peroxide ion",            "formula": "O2",     "charge": -2 },
+    { "name": "Iodate ion",              "formula": "IO3",    "charge": -1 },
+    { "name": "Nitrate ion",             "formula": "NO3",    "charge": -1 },
+    { "name": "Nitrite ion",             "formula": "NO2",    "charge": -1 },
+    { "name": "Permanganate ion",        "formula": "MnO4",   "charge": -1 },
+    { "name": "Phosphate ion",           "formula": "PO4",    "charge": -3 },
+    { "name": "Phosphite ion",           "formula": "PO3",    "charge": -3 },
+    { "name": "Sulfate ion",             "formula": "SO4",    "charge": -2, "aliases": ["sulphate ion", "sulphate"] },
+    { "name": "Sulfite ion",             "formula": "SO3",    "charge": -2, "aliases": ["sulphite ion", "sulphite"] },
+    { "name": "Thiocyanate ion",         "formula": "SCN",    "charge": -1 }
+  ]
+}

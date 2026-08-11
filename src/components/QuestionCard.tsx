@@ -20,8 +20,6 @@ interface QuestionCardProps {
 
 type VoiceState = 'mic' | 'listening' | 'input';
 
-const AUTO_SUBMIT_MS = 2000;
-
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -38,14 +36,11 @@ export default function QuestionCard({
   const [voiceState, setVoiceState] = useState<VoiceState>(
     voiceMode ? 'mic' : 'input',
   );
-  const [countdown, setCountdown] = useState(false);
-  const [countdownKey, setCountdownKey] = useState(0);
-  const [autoSubmitCancelled, setAutoSubmitCancelled] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const onSubmitRef = useRef(onSubmit);
   onSubmitRef.current = onSubmit;
-  const autoSubmitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const submittedRef = useRef(false);
 
   const sr = useSpeechRecognition();
   const srRef = useRef(sr);
@@ -77,12 +72,7 @@ export default function QuestionCard({
   // -------------------------------------------
   useEffect(() => {
     setAnswer('');
-    setCountdown(false);
-    setAutoSubmitCancelled(false);
-    if (autoSubmitTimerRef.current) {
-      clearTimeout(autoSubmitTimerRef.current);
-      autoSubmitTimerRef.current = null;
-    }
+    submittedRef.current = false;
 
     if (!voiceMode) {
       setVoiceState('input');
@@ -112,62 +102,22 @@ export default function QuestionCard({
   }, [question, voiceMode]);
 
   // -------------------------------------------
-  // Sync speech transcript → answer field
+  // Voice mode: auto-submit when SR finishes
   // -------------------------------------------
   useEffect(() => {
-    if (sr.transcript) {
-      setAnswer(sr.transcript);
-    }
-  }, [sr.transcript]);
-
-  // -------------------------------------------
-  // When listening stops → transition to input
-  // -------------------------------------------
-  useEffect(() => {
-    if (!sr.isListening && voiceState === 'listening') {
-      setVoiceState('input');
-      if (!sr.transcript) {
-        setTimeout(() => inputRef.current?.focus(), 100);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sr.isListening]);
-
-  // -------------------------------------------
-  // Auto-submit timer (voice mode only)
-  // -------------------------------------------
-  useEffect(() => {
-    if (autoSubmitTimerRef.current) {
-      clearTimeout(autoSubmitTimerRef.current);
-      autoSubmitTimerRef.current = null;
-    }
-
-    const trimmed = answer.trim();
-    if (
-      !voiceMode ||
-      !trimmed ||
-      disabled ||
-      voiceState === 'listening' ||
-      autoSubmitCancelled
-    ) {
-      setCountdown(false);
+    if (!voiceMode || voiceState !== 'listening' || sr.isListening || submittedRef.current) {
       return;
     }
 
-    setCountdown(true);
-    setCountdownKey((k) => k + 1);
-    autoSubmitTimerRef.current = setTimeout(() => {
-      setCountdown(false);
-      onSubmitRef.current(trimmed);
-    }, AUTO_SUBMIT_MS);
-
-    return () => {
-      if (autoSubmitTimerRef.current) {
-        clearTimeout(autoSubmitTimerRef.current);
-        autoSubmitTimerRef.current = null;
-      }
-    };
-  }, [answer, voiceMode, disabled, voiceState, autoSubmitCancelled]);
+    if (sr.transcript) {
+      // Voice captured — submit immediately, no timer
+      submittedRef.current = true;
+      onSubmitRef.current(sr.transcript);
+    } else {
+      // SR ended without capturing anything — let user retry
+      setVoiceState('mic');
+    }
+  }, [sr.isListening, sr.transcript, voiceMode, voiceState]);
 
   // -------------------------------------------
   // Handlers
@@ -176,10 +126,6 @@ export default function QuestionCard({
     e.preventDefault();
     const trimmed = answer.trim();
     if (trimmed && !disabled) {
-      setCountdown(false);
-      if (autoSubmitTimerRef.current) {
-        clearTimeout(autoSubmitTimerRef.current);
-      }
       onSubmit(trimmed);
     }
   };
@@ -206,24 +152,10 @@ export default function QuestionCard({
     setVoiceState('mic');
   };
 
-  const handleCancelAutoSubmit = () => {
-    setAutoSubmitCancelled(true);
-    setCountdown(false);
-    if (autoSubmitTimerRef.current) {
-      clearTimeout(autoSubmitTimerRef.current);
-      autoSubmitTimerRef.current = null;
-    }
-    setTimeout(() => inputRef.current?.focus(), 100);
-  };
-
   const handleRevealInput = () => {
     setVoiceState('input');
     setTimeout(() => inputRef.current?.focus(), 100);
   };
-
-  // Should we show the "Speak again" option?
-  // Only if SR has actually worked before (not just "supported")
-  const canUseSR = srStatusRef.current === true;
 
   // -------------------------------------------
   // Render
@@ -338,7 +270,7 @@ export default function QuestionCard({
         </div>
       )}
 
-      {/* STATE: Input field (after speech, fallback, or SR unavailable) */}
+      {/* STATE: Text input (non-voice mode, or SR failure fallback) */}
       {voiceState === 'input' && (
         <form onSubmit={handleSubmit}>
           <div className="mb-1">
@@ -346,12 +278,7 @@ export default function QuestionCard({
               ref={inputRef}
               type="text"
               value={answer}
-              onChange={(e) => {
-                setAnswer(e.target.value);
-                if (autoSubmitCancelled && e.target.value.trim()) {
-                  setAutoSubmitCancelled(false);
-                }
-              }}
+              onChange={(e) => setAnswer(e.target.value)}
               disabled={disabled}
               placeholder="Your answer..."
               autoComplete="off"
@@ -365,35 +292,11 @@ export default function QuestionCard({
             />
           </div>
 
-          {/* Auto-submit countdown bar */}
-          {countdown && (
-            <div className="w-full h-1 rounded-full bg-[var(--color-chem-border)] overflow-hidden mb-1">
-              <div
-                key={countdownKey}
-                className="h-full bg-[var(--color-chem-primary)] rounded-full"
-                style={{
-                  transformOrigin: 'left',
-                  animation: `chem-countdown ${AUTO_SUBMIT_MS}ms linear forwards`,
-                }}
-              />
-            </div>
-          )}
-
-          {/* Hint / auto-submit status */}
+          {/* Hint */}
           <div className="text-center mb-4">
-            {countdown ? (
-              <button
-                type="button"
-                onClick={handleCancelAutoSubmit}
-                className="text-xs text-[var(--color-chem-primary)] font-medium"
-              >
-                Auto-submitting&hellip; Tap to edit
-              </button>
-            ) : (
-              <p className="text-xs text-[var(--color-chem-text-muted)]">
-                Tap &#x1F3A4; on your keyboard to dictate
-              </p>
-            )}
+            <p className="text-xs text-[var(--color-chem-text-muted)]">
+              Tap &#x1F3A4; on your keyboard to dictate
+            </p>
           </div>
 
           {/* Submit button */}
@@ -402,19 +305,8 @@ export default function QuestionCard({
             disabled={disabled || !answer.trim()}
             className="w-full py-3.5 px-6 rounded-xl font-semibold text-white bg-[var(--color-chem-primary)] hover:bg-[var(--color-chem-primary-dark)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            {countdown ? 'Submitting…' : 'Submit'}
+            Submit
           </button>
-
-          {/* "Speak again" — only if SR has actually worked before */}
-          {voiceMode && !countdown && canUseSR && (
-            <button
-              type="button"
-              onClick={handleMicTap}
-              className="w-full mt-3 text-sm text-[var(--color-chem-text-muted)] underline underline-offset-2 hover:text-[var(--color-chem-text)] transition-colors"
-            >
-              &#x1F399;&#xFE0F; Speak again
-            </button>
-          )}
         </form>
       )}
     </div>

@@ -429,42 +429,41 @@ export default function SummaryScreen({
                 </span>
 
                 <div className="flex-1 min-w-0">
-                  {/* Prompt */}
-                  <p className="font-medium text-[var(--color-chem-text)]">
+                  {/* Question: prompt + instruction */}
+                  <p className="font-bold text-lg text-[var(--color-chem-text)]">
                     {r.question.prompt}
                   </p>
+                  <p className="text-xs text-[var(--color-chem-text-muted)] mt-0.5">
+                    {r.question.instruction}
+                  </p>
 
-                  {/* Incorrect: show answers */}
-                  {!r.result.correct && (
-                    <div className="mt-1.5 space-y-0.5 text-sm">
-                      <p>
-                        <span className="text-[var(--color-chem-text-muted)]">
-                          Your answer:{' '}
-                        </span>
-                        <span className="text-[var(--color-chem-incorrect)]">
-                          {r.userAnswer}
-                        </span>
-                      </p>
+                  {/* Answers */}
+                  <div className="mt-2 space-y-0.5 text-sm">
+                    <p>
+                      <span className="text-[var(--color-chem-text-muted)]">
+                        Your answer:{' '}
+                      </span>
+                      <span
+                        className={
+                          r.result.correct
+                            ? 'text-[var(--color-chem-correct)] font-medium'
+                            : 'text-[var(--color-chem-incorrect)] font-medium'
+                        }
+                      >
+                        {r.userAnswer}
+                      </span>
+                    </p>
+                    {!r.result.correct && (
                       <p>
                         <span className="text-[var(--color-chem-text-muted)]">
                           Correct:{' '}
                         </span>
-                        <span className="text-[var(--color-chem-correct)]">
+                        <span className="text-[var(--color-chem-correct)] font-medium">
                           {r.question.correctDisplay}
                         </span>
                       </p>
-                    </div>
-                  )}
-
-                  {/* Fun fact */}
-                  {r.question.funFact && (
-                    <div className="mt-2 flex items-start gap-1.5 text-xs text-[var(--color-chem-text-muted)] leading-relaxed">
-                      <span className="shrink-0" aria-hidden="true">
-                        &#x1F4A1;
-                      </span>
-                      <span>{r.question.funFact}</span>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

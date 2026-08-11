@@ -12,6 +12,14 @@ import { useState, useCallback, useRef, useEffect } from 'react';
  * Requires HTTPS (or localhost) on most browsers. Over plain HTTP the API
  * constructor exists but start() fails — the `error` field exposes this so
  * callers can skip the mic button on subsequent questions.
+ *
+ * iOS Safari mic release:
+ * iOS Safari only releases the microphone (orange dot) when `onend` fires
+ * through the browser's internal cleanup path. We must:
+ *   1. Use `stop()` (not `abort()`) for graceful shutdown
+ *   2. NEVER null `onend` before stopping — the browser needs it
+ *   3. Guard callbacks with an instance identity check so stale sessions
+ *      don't corrupt state after a new session starts
  */
 
 // The SpeechRecognition API may not be in the TS DOM lib depending on config.
@@ -48,14 +56,40 @@ export function useSpeechRecognition() {
     setIsSupported(getRecognitionClass() !== null);
   }, []);
 
+  /**
+   * Gracefully stop the current SR session.
+   * Uses stop() so iOS Safari can complete its mic-release lifecycle.
+   * Nulls the ref first so stale onend/onerror callbacks become no-ops.
+   * NEVER nulls onend — the browser must fire it to release the mic.
+   */
+  const stopSession = useCallback(() => {
+    const rec = recognitionRef.current;
+    if (!rec) return;
+
+    // Null the ref FIRST — any callbacks that fire after this point
+    // will see recognitionRef.current !== rec and become no-ops
+    recognitionRef.current = null;
+
+    // Remove data handlers but KEEP onend — iOS Safari needs it to
+    // fire through the browser's internal mic-release path
+    rec.onresult = null;
+    rec.onerror = null;
+
+    // Graceful stop — lets the browser complete its lifecycle
+    try {
+      rec.stop();
+    } catch {
+      // Already stopped or never started — force abort as fallback
+      try { rec.abort(); } catch { /* ignore */ }
+    }
+  }, []);
+
   const start = useCallback((): boolean => {
     const Cls = getRecognitionClass();
     if (!Cls) return false;
 
-    // Abort any existing session
-    if (recognitionRef.current) {
-      recognitionRef.current.abort();
-    }
+    // Stop any existing session first
+    stopSession();
 
     const recognition = new Cls();
     recognition.continuous = false;
@@ -77,11 +111,18 @@ export function useSpeechRecognition() {
       setTranscript(final || interim);
     };
 
-    recognition.onend = () => setIsListening(false);
+    // Only update state if this is still the active instance —
+    // prevents stale sessions from corrupting state
+    recognition.onend = () => {
+      if (recognitionRef.current === recognition) {
+        setIsListening(false);
+      }
+      // Even if this is a stale instance, the browser fires onend
+      // to complete its mic-release cycle. Don't interfere.
+    };
 
     recognition.onerror = (event) => {
-      // 'aborted' is intentional (we called .abort()), don't treat as error
-      if (event.error !== 'aborted') {
+      if (event.error !== 'aborted' && recognitionRef.current === recognition) {
         setIsListening(false);
         setError(event.error);
       }
@@ -96,41 +137,38 @@ export function useSpeechRecognition() {
       recognition.start();
       return true;
     } catch {
+      recognitionRef.current = null;
       setIsListening(false);
       setError('start-failed');
       return false;
     }
-  }, []);
-
-  /** Fully tear down a recognition instance so the browser releases the mic. */
-  const destroy = useCallback(() => {
-    const rec = recognitionRef.current;
-    if (rec) {
-      // Null handlers first — prevents any late callbacks from firing
-      rec.onresult = null;
-      rec.onend = null;
-      rec.onerror = null;
-      rec.abort();
-      recognitionRef.current = null;
-    }
-  }, []);
+  }, [stopSession]);
 
   const stop = useCallback(() => {
-    recognitionRef.current?.stop();
+    try { recognitionRef.current?.stop(); } catch { /* ignore */ }
   }, []);
 
   const reset = useCallback(() => {
-    destroy();
+    stopSession();
     setTranscript('');
     setIsListening(false);
-  }, [destroy]);
+  }, [stopSession]);
 
-  // Cleanup on unmount — aggressively release the mic
+  // Cleanup on unmount — stop gracefully so the browser releases the mic
   useEffect(() => {
     return () => {
-      destroy();
+      const rec = recognitionRef.current;
+      if (rec) {
+        recognitionRef.current = null;
+        // Keep onend alive — iOS Safari needs it for mic release
+        rec.onresult = null;
+        rec.onerror = null;
+        try { rec.stop(); } catch {
+          try { rec.abort(); } catch { /* ignore */ }
+        }
+      }
     };
-  }, [destroy]);
+  }, []);
 
   return { isSupported, isListening, transcript, error, start, stop, reset };
 }

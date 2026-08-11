@@ -74,6 +74,9 @@ export default function QuestionCard({
     setAnswer('');
     submittedRef.current = false;
 
+    // Kill any lingering SR session from the previous question
+    srRef.current.reset();
+
     if (!voiceMode) {
       setVoiceState('input');
       const timer = setTimeout(() => inputRef.current?.focus(), 100);
@@ -110,9 +113,11 @@ export default function QuestionCard({
     }
 
     if (sr.transcript) {
-      // Voice captured — submit immediately, no timer
+      // Voice captured — kill the mic explicitly, then submit
+      const captured = sr.transcript;
+      sr.reset();
       submittedRef.current = true;
-      onSubmitRef.current(sr.transcript);
+      onSubmitRef.current(captured);
     } else {
       // SR ended without capturing anything — let user retry
       setVoiceState('mic');

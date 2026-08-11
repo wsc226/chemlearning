@@ -93,6 +93,24 @@ export function gradeElementAnswer(
     };
   }
 
+  // Voice-mode spaceless fuzzy match: handles SR splitting element names
+  // into multiple common words (e.g. "ball wrong" → "boron", "all gone" → "argon").
+  // Joins the answer (strips spaces), then allows edits proportional to the
+  // length difference plus 1 — the extra characters from SR's word-splitting
+  // consume most of the edit budget, leaving room for only minor phonetic drift.
+  const spacelessAnswer = normalizedAnswer.replace(/[\s-]/g, '');
+  const spacelessName = normalizedName.replace(/[\s-]/g, '');
+  if (spacelessAnswer.length > 0) {
+    const dist = levenshtein(spacelessAnswer, spacelessName);
+    const lenDiff = Math.abs(spacelessAnswer.length - spacelessName.length);
+    if (dist <= lenDiff + 1) {
+      return {
+        correct: true,
+        feedback: `Accepted — voice match for "${element.name}."`,
+      };
+    }
+  }
+
   return { correct: false, feedback: `The correct answer is ${element.name}.` };
 }
 

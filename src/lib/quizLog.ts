@@ -1,11 +1,15 @@
 'use client';
 
 /**
- * Persistent answer log — stores every quiz response in localStorage.
+ * Answer logging — every quiz submission is silently POSTed to a Google Sheet
+ * (via a Google Apps Script webhook) for centralized teacher review.
  *
- * Used for weekly review: accumulate SR transcripts and grading results
- * across sessions, then export for analysis to add new aliases and
- * parser improvements.
+ * Architecture:
+ *   1. On each submission, POST to the webhook URL (fire-and-forget).
+ *   2. If offline or the POST fails, queue the entry in localStorage.
+ *   3. On the next successful POST, flush queued entries in the same request.
+ *   4. The webhook URL is set at build time via NEXT_PUBLIC_SHEET_WEBHOOK_URL.
+ *      When unset, logging is silently disabled (no error, no UI).
  */
 
 import type { QuestionType } from './questions';
@@ -36,109 +40,83 @@ export interface LogEntry {
 }
 
 // ---------------------------------------------------------------------------
-// Storage
+// Config
 // ---------------------------------------------------------------------------
 
-const LOG_KEY = 'chemassistant-answer-log';
+const SHEET_URL = process.env.NEXT_PUBLIC_SHEET_WEBHOOK_URL ?? '';
+const QUEUE_KEY = 'chemassistant-log-queue';
 
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+/**
+ * Log a quiz answer — silently POSTs to the Google Sheet webhook.
+ * Queues entries in localStorage when offline and flushes on next success.
+ * No-op when NEXT_PUBLIC_SHEET_WEBHOOK_URL is not configured.
+ */
 export function logAnswer(entry: LogEntry): void {
-  const log = getLog();
-  log.push(entry);
-  try {
-    localStorage.setItem(LOG_KEY, JSON.stringify(log));
-  } catch {
-    // localStorage full or unavailable — silently drop
-  }
+  if (!SHEET_URL) return;
+  postToSheet(entry);
 }
 
-export function getLog(): LogEntry[] {
+// ---------------------------------------------------------------------------
+// Sheet POST + offline queue
+// ---------------------------------------------------------------------------
+
+function postToSheet(entry: LogEntry): void {
+  const queued = getQueue();
+  const payload = queued.length > 0 ? [...queued, entry] : [entry];
+
+  fetch(SHEET_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    // mode: no-cors avoids preflight — Apps Script still receives the body.
+    // Trade-off: we can't read the response, but for logging that's fine.
+    mode: 'no-cors',
+  })
+    .then(() => {
+      // Request was sent — clear the queue.
+      // (With no-cors we can't verify the server accepted it, but the
+      // teacher will notice if the sheet stays empty and can re-check setup.)
+      clearQueue();
+    })
+    .catch(() => {
+      // True network failure (offline) — queue for next attempt
+      queueEntry(entry);
+    });
+}
+
+// ---------------------------------------------------------------------------
+// localStorage queue for offline resilience
+// ---------------------------------------------------------------------------
+
+function getQueue(): LogEntry[] {
   if (typeof window === 'undefined') return [];
   try {
-    const raw = localStorage.getItem(LOG_KEY);
+    const raw = localStorage.getItem(QUEUE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
 }
 
-export function clearLog(): void {
+function queueEntry(entry: LogEntry): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem(LOG_KEY);
-}
-
-// ---------------------------------------------------------------------------
-// Export helpers
-// ---------------------------------------------------------------------------
-
-/** Pretty-printed JSON export — ideal for analysis. */
-export function exportJSON(): string {
-  return JSON.stringify(getLog(), null, 2);
-}
-
-/** CSV export — for spreadsheet review. */
-export function exportCSV(): string {
-  const log = getLog();
-  if (log.length === 0) return '';
-
-  const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
-  const headers = [
-    'Timestamp',
-    'Type',
-    'Prompt',
-    'Instruction',
-    'Answer',
-    'Correct',
-    'Expected',
-    'Feedback',
-    'Voice',
-  ];
-
-  const rows = log.map((e) =>
-    [
-      e.ts,
-      e.type,
-      e.prompt,
-      e.instruction,
-      e.answer,
-      e.correct ? 'Y' : 'N',
-      e.expected,
-      e.feedback ?? '',
-      e.voice ? 'Y' : 'N',
-    ]
-      .map((v) => escape(String(v)))
-      .join(','),
-  );
-
-  return [headers.join(','), ...rows].join('\n');
-}
-
-/**
- * Compact text summary of wrong answers — designed for clipboard copy
- * so the teacher can paste it into a chat for analysis.
- */
-export function formatWrongAnswers(): string {
-  const log = getLog();
-  const wrong = log.filter((e) => !e.correct);
-
-  if (wrong.length === 0) return 'No wrong answers logged.';
-
-  const dateRange =
-    log.length > 0
-      ? `${new Date(log[0].ts).toLocaleDateString()} – ${new Date(log[log.length - 1].ts).toLocaleDateString()}`
-      : '';
-
-  const lines = [
-    `ChemAssistant — Wrong Answers`,
-    `${dateRange} · ${log.length} total, ${wrong.length} wrong (${Math.round((wrong.length / log.length) * 100)}%)`,
-    '',
-  ];
-
-  for (const e of wrong) {
-    const mode = e.voice ? '🎤' : '⌨️';
-    lines.push(
-      `${mode} [${e.type}] ${e.prompt}: "${e.answer}" → ${e.expected}`,
-    );
+  const queue = getQueue();
+  queue.push(entry);
+  try {
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+  } catch {
+    // localStorage full — drop silently
   }
+}
 
-  return lines.join('\n');
+function clearQueue(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(QUEUE_KEY);
+  } catch {
+    // ignore
+  }
 }

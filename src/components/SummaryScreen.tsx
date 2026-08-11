@@ -282,10 +282,11 @@ async function generateSummaryPNG(
     const promptText = truncateText(ctx, r.question.prompt, 200);
     ctx.fillText(promptText, PAD + 44, textY);
 
-    // User answer
+    // User answer (show canonical correct answer for correct items)
     ctx.fillStyle = r.result.correct ? IMG_COLORS.text : IMG_COLORS.incorrect;
     ctx.font = '14px system-ui, -apple-system, sans-serif';
-    const userText = truncateText(ctx, r.userAnswer, 200);
+    const displayAnswer = r.result.correct ? r.question.correctDisplay : r.userAnswer;
+    const userText = truncateText(ctx, displayAnswer, 200);
     ctx.fillText(userText, PAD + 260, textY);
 
     // Correct answer (show for wrong answers)
@@ -450,7 +451,9 @@ export default function SummaryScreen({
                             : 'text-[var(--color-chem-incorrect)] font-medium'
                         }
                       >
-                        {r.userAnswer}
+                        {r.result.correct
+                          ? r.question.correctDisplay
+                          : r.userAnswer}
                       </span>
                     </p>
                     {!r.result.correct && (

@@ -395,20 +395,27 @@ export function gradeIonNameAnswer(
   const normalizedAnswer = normalize(answer);
   const normalizedExpected = normalizeIonName(ion.name);
 
-  // Exact match
-  if (normalizedAnswer === normalizedExpected) return { correct: true };
+  // SR commonly hears "ion" as "iron" — substitute before comparing
+  const fixedAnswer = normalizedAnswer.replace(/\biron\b/g, 'ion');
+
+  // Exact match (try both original and iron→ion fixed version)
+  if (fixedAnswer === normalizedExpected || normalizedAnswer === normalizedExpected) {
+    return { correct: true };
+  }
 
   // Match without "ion" suffix (user might say "iron 2" instead of "iron 2 ion")
   const expectedBase = normalizedExpected.replace(/\s*ion$/, '');
-  const answerBase = normalizedAnswer.replace(/\s*ion$/, '');
+  const answerBase = fixedAnswer.replace(/\s*ion$/, '');
   if (answerBase === expectedBase) return { correct: true };
 
-  // Check aliases
+  // Check aliases (try both original and iron→ion fixed)
   for (const alias of ion.aliases ?? []) {
     const normalizedAlias = normalizeIonName(alias);
-    if (normalizedAnswer === normalizedAlias) return { correct: true };
-    if (answerBase === normalizedAlias.replace(/\s*ion$/, ''))
+    if (fixedAnswer === normalizedAlias || normalizedAnswer === normalizedAlias) {
       return { correct: true };
+    }
+    const aliasBase = normalizedAlias.replace(/\s*ion$/, '');
+    if (answerBase === aliasBase) return { correct: true };
   }
 
   // Levenshtein tolerance ≤ 2 against the base name (absorb dictation slips)

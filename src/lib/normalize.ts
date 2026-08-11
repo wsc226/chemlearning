@@ -12,9 +12,14 @@
 const NUMBER_WORDS: Record<string, string> = {
   zero: '0',
   one: '1',
+  won: '1',    // SR mishearing
   two: '2',
+  to: '2',     // SR mishearing
+  too: '2',    // SR mishearing
   three: '3',
   four: '4',
+  for: '4',    // SR mishearing
+  fore: '4',   // SR mishearing
   five: '5',
   six: '6',
   seven: '7',

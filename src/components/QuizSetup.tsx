@@ -98,7 +98,7 @@ export default function QuizSetup({ quizType, onStart, onBack }: QuizSetupProps)
           Assessment Mode
         </h2>
         <div className="grid grid-cols-1 gap-3">
-          {/* Immediate Feedback card */}
+          {/* Practice Mode card */}
           <button
             type="button"
             onClick={() => setMode('immediate')}
@@ -109,14 +109,14 @@ export default function QuizSetup({ quizType, onStart, onBack }: QuizSetupProps)
             }`}
           >
             <div className="font-semibold text-[var(--color-chem-text)]">
-              Immediate Feedback
+              &#x1F4D6; Practice
             </div>
             <div className="text-sm text-[var(--color-chem-text-muted)] mt-1">
-              See results after each question
+              Learn as you go &mdash; see feedback after each question
             </div>
           </button>
 
-          {/* Summary card */}
+          {/* Test Mode card */}
           <button
             type="button"
             onClick={() => setMode('summary')}
@@ -127,10 +127,10 @@ export default function QuizSetup({ quizType, onStart, onBack }: QuizSetupProps)
             }`}
           >
             <div className="font-semibold text-[var(--color-chem-text)]">
-              Summary
+              &#x1F4DD; Test
             </div>
             <div className="text-sm text-[var(--color-chem-text-muted)] mt-1">
-              See all results at the end
+              Answer all questions, then see your results
             </div>
           </button>
         </div>

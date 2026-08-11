@@ -102,22 +102,35 @@ export function useSpeechRecognition() {
     }
   }, []);
 
+  /** Fully tear down a recognition instance so the browser releases the mic. */
+  const destroy = useCallback(() => {
+    const rec = recognitionRef.current;
+    if (rec) {
+      // Null handlers first — prevents any late callbacks from firing
+      rec.onresult = null;
+      rec.onend = null;
+      rec.onerror = null;
+      rec.abort();
+      recognitionRef.current = null;
+    }
+  }, []);
+
   const stop = useCallback(() => {
     recognitionRef.current?.stop();
   }, []);
 
   const reset = useCallback(() => {
-    recognitionRef.current?.abort();
+    destroy();
     setTranscript('');
     setIsListening(false);
-  }, []);
+  }, [destroy]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount — aggressively release the mic
   useEffect(() => {
     return () => {
-      recognitionRef.current?.abort();
+      destroy();
     };
-  }, []);
+  }, [destroy]);
 
   return { isSupported, isListening, transcript, error, start, stop, reset };
 }

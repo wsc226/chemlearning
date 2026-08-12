@@ -5,12 +5,15 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 /**
  * Hook wrapping the Web Speech API (SpeechRecognition).
  *
- * iOS Safari mic-release strategy:
- *   1. Use stop() (not abort()) — graceful shutdown
- *   2. Set onend to a self-cleaning handler so the browser can fire it,
- *      then the handler nulls itself to break the reference cycle for GC
- *   3. On unmount: getUserMedia({ audio }) → track.stop() as nuclear fallback —
- *      this directly releases the mic hardware even if SR cleanup failed
+ * iOS Safari/Chrome mic-release strategy (revised):
+ *   1. Call BOTH stop() AND abort() — iOS Chrome may need abort() specifically
+ *   2. Keep onend alive (self-cleaning handler) so WebKit can fire its internal
+ *      cleanup — nulling onend before WebKit fires it can leave the audio
+ *      session dangling
+ *   3. Do NOT call getUserMedia as a "nuclear" fallback — on iOS this REOPENS
+ *      the mic, creating a new audio session that keeps the indicator alive
+ *   4. Add pagehide listener — catches page reloads and tab switches on iOS,
+ *      where beforeunload is unreliable
  */
 
 // The SpeechRecognition API may not be in the TS DOM lib depending on config.
@@ -34,21 +37,6 @@ function getRecognitionClass(): (new () => SpeechRecognitionInstance) | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
-/**
- * Nuclear mic release: request mic via getUserMedia and immediately stop
- * all tracks. This forces iOS Safari to release the mic hardware even if
- * SpeechRecognition's own cleanup didn't.
- */
-function forceReleaseMic() {
-  if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-    return;
-  }
-  navigator.mediaDevices
-    .getUserMedia({ audio: true })
-    .then((stream) => stream.getTracks().forEach((track) => track.stop()))
-    .catch(() => {});
-}
-
 export function useSpeechRecognition() {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
@@ -56,8 +44,6 @@ export function useSpeechRecognition() {
   /** Non-null when SR failed — contains the error code (e.g. "not-allowed") */
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
-  /** Track whether SR was ever used, so we only force-release mic when needed */
-  const usedSRRef = useRef(false);
 
   // SSR-safe feature detection on mount
   useEffect(() => {
@@ -65,13 +51,13 @@ export function useSpeechRecognition() {
   }, []);
 
   /**
-   * Gracefully stop the current SR session and release mic.
+   * Kill the current SR instance and release mic.
    *
-   * - Nulls the ref first so stale callbacks become no-ops
-   * - Sets onend to a self-cleaning handler: lets the browser fire it for
-   *   its internal cleanup, then the handler nulls itself to break the
-   *   reference cycle and allow GC of the instance
-   * - Uses stop() for graceful shutdown; abort() only as fallback
+   * - Nulls the ref so stale callbacks become no-ops
+   * - Keeps onend as a self-cleaning handler (WebKit must fire it to
+   *   release its internal audio session)
+   * - Calls BOTH stop() and abort() — stop() for graceful shutdown,
+   *   abort() as the aggressive follow-up iOS Chrome may need
    */
   const stopSession = useCallback(() => {
     const rec = recognitionRef.current;
@@ -81,16 +67,15 @@ export function useSpeechRecognition() {
     rec.onresult = null;
     rec.onerror = null;
 
-    // Self-cleaning onend: lets browser fire it, then breaks all refs
+    // Self-cleaning onend: lets WebKit fire it for its audio-session
+    // teardown, then the handler nulls itself to break refs for GC
     rec.onend = () => {
       rec.onend = null;
     };
 
-    try {
-      rec.stop();
-    } catch {
-      try { rec.abort(); } catch { /* ignore */ }
-    }
+    // Always call both — iOS Chrome may ignore stop() but honor abort()
+    try { rec.stop(); } catch { /* ignore */ }
+    try { rec.abort(); } catch { /* ignore */ }
   }, []);
 
   const start = useCallback((): boolean => {
@@ -135,7 +120,6 @@ export function useSpeechRecognition() {
     };
 
     recognitionRef.current = recognition;
-    usedSRRef.current = true;
     setTranscript('');
     setError(null);
     setIsListening(true);
@@ -161,25 +145,44 @@ export function useSpeechRecognition() {
     setIsListening(false);
   }, [stopSession]);
 
-  // Cleanup on unmount — stop SR and force-release mic hardware
+  // Cleanup: component unmount + page hide/unload
   useEffect(() => {
+    /**
+     * Aggressively kill SR — used on pagehide (page reload, tab close,
+     * navigation) where we need to release the mic immediately.
+     * On iOS, pagehide is more reliable than beforeunload.
+     */
+    const killSR = () => {
+      const rec = recognitionRef.current;
+      if (!rec) return;
+      recognitionRef.current = null;
+      // On pagehide/unload, null everything — no point in self-cleaning
+      // handlers when the page is being destroyed
+      rec.onresult = null;
+      rec.onerror = null;
+      rec.onend = null;
+      try { rec.abort(); } catch { /* ignore */ }
+    };
+
+    window.addEventListener('pagehide', killSR);
+    window.addEventListener('beforeunload', killSR);
+
     return () => {
+      window.removeEventListener('pagehide', killSR);
+      window.removeEventListener('beforeunload', killSR);
+
+      // Component unmount cleanup
       const rec = recognitionRef.current;
       if (rec) {
         recognitionRef.current = null;
         rec.onresult = null;
         rec.onerror = null;
         rec.onend = () => { rec.onend = null; };
-        try { rec.stop(); } catch {
-          try { rec.abort(); } catch { /* ignore */ }
-        }
+        try { rec.stop(); } catch { /* ignore */ }
+        try { rec.abort(); } catch { /* ignore */ }
       }
-
-      // Nuclear fallback: force-release mic via getUserMedia → track.stop()
-      // Only if we actually used SpeechRecognition during this component's lifetime
-      if (usedSRRef.current) {
-        forceReleaseMic();
-      }
+      // NOT calling getUserMedia here — on iOS it re-opens the mic,
+      // creating a new audio session that keeps the indicator alive.
     };
   }, []);
 

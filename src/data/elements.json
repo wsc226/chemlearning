@@ -5,7 +5,7 @@
     { "symbol": "He", "name": "helium",    "atomicNumber": 2,  "aliases": ["heal him", "healing", "healy um"], "funFact": null },
     { "symbol": "Li", "name": "lithium",   "atomicNumber": 3,  "aliases": [], "funFact": null },
     { "symbol": "Be", "name": "beryllium", "atomicNumber": 4,  "aliases": ["burial", "barely um", "barrel eum"], "funFact": null },
-    { "symbol": "B",  "name": "boron",     "atomicNumber": 5,  "aliases": ["bore on", "bar on", "born", "ball wrong", "ball run", "bar ron"], "funFact": null },
+    { "symbol": "B",  "name": "boron",     "atomicNumber": 5,  "aliases": ["bore on", "bar on", "born", "ball wrong", "ball run", "bar ron", "ballon", "balloon"], "funFact": null },
     { "symbol": "C",  "name": "carbon",    "atomicNumber": 6,  "aliases": [], "funFact": null },
     { "symbol": "N",  "name": "nitrogen",  "atomicNumber": 7,  "aliases": [], "funFact": null },
     { "symbol": "O",  "name": "oxygen",    "atomicNumber": 8,  "aliases": [], "funFact": null },

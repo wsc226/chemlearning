@@ -1,5 +1,5 @@
 {
-  "_note": "v1 scope: first 20 elements (atomic numbers 1-20). Your list had 'Na' listed twice in a row (positions 11 and 19) — position 19 is almost certainly a copy/paste slip, since the standard sequence after Ar (18) is K, Ca (19, 20), not Na again. Corrected to K (potassium) below. Flagging this so you can confirm.",
+  "_note": "Elements data. First 20 (H–Ca) are the core set; the remaining 32 are the expanded set curated for high-school chemistry.",
   "elements": [
     { "symbol": "H",  "name": "hydrogen",  "atomicNumber": 1,  "aliases": [], "funFact": null },
     { "symbol": "He", "name": "helium",    "atomicNumber": 2,  "aliases": ["heal him", "healing", "healy um"], "funFact": null },
@@ -30,12 +30,89 @@
       "name": "potassium",
       "atomicNumber": 19,
       "aliases": [],
-      "funFact": "Symbol comes from the Latin 'kalium,' from the Arabic 'al-qalyah' (plant ashes), which potassium salts were historically extracted from — not from the English name 'potassium.' (Corrected from the list's repeated 'Na' — see _note above.)"
+      "funFact": "Symbol comes from the Latin 'kalium,' from the Arabic 'al-qalyah' (plant ashes), which potassium salts were historically extracted from — not from the English name 'potassium.'"
     },
-    { "symbol": "Ca", "name": "calcium",   "atomicNumber": 20, "aliases": [], "funFact": null }
-  ],
-  "_deferredForLaterPhase": {
-    "note": "Remaining elements from your full list, not built out yet — symbols/order preserved for when this phase starts. Elements needing a 'symbol differs from name' fact later: Fe (ferrum), Cu (cuprum), Ag (argentum), Sn (stannum), Sb (stibium), Au (aurum), Hg (hydrargyrum), Pb (plumbum).",
-    "symbols": ["Cr","Mn","Fe","Co","Ni","Cu","Zn","As","Br","Kr","Rb","Sr","Pd","Ag","Cd","Sn","Sb","I","Xe","Cs","Ba","Pt","Au","Hg","Pb","Bi","Rn","Fr","Ra","Th","U","Pu"]
-  }
+    { "symbol": "Ca", "name": "calcium",   "atomicNumber": 20, "aliases": [], "funFact": null },
+
+    { "symbol": "Cr", "name": "chromium",  "atomicNumber": 24, "aliases": ["chrome ium", "chrome"], "funFact": null },
+    { "symbol": "Mn", "name": "manganese", "atomicNumber": 25, "aliases": ["mango knees", "manga knees"], "funFact": null },
+    {
+      "symbol": "Fe",
+      "name": "iron",
+      "atomicNumber": 26,
+      "aliases": ["ion", "i earn", "i run"],
+      "funFact": "Symbol comes from the Latin 'ferrum.' This is why iron compounds are called 'ferrous' (Fe²⁺) and 'ferric' (Fe³⁺)."
+    },
+    { "symbol": "Co", "name": "cobalt",    "atomicNumber": 27, "aliases": ["co bolt", "cobbled"], "funFact": null },
+    { "symbol": "Ni", "name": "nickel",    "atomicNumber": 28, "aliases": [], "funFact": null },
+    {
+      "symbol": "Cu",
+      "name": "copper",
+      "atomicNumber": 29,
+      "aliases": ["cover", "coffer"],
+      "funFact": "Symbol comes from the Latin 'cuprum,' named after the island of Cyprus, where copper was mined extensively in the ancient world."
+    },
+    { "symbol": "Zn", "name": "zinc",      "atomicNumber": 30, "aliases": ["sink", "think"], "funFact": null },
+    { "symbol": "As", "name": "arsenic",   "atomicNumber": 33, "aliases": ["are scenic"], "funFact": null },
+    { "symbol": "Br", "name": "bromine",   "atomicNumber": 35, "aliases": ["bro mean", "bro mine", "bromide"], "funFact": null },
+    { "symbol": "Kr", "name": "krypton",   "atomicNumber": 36, "aliases": ["cripton", "krypto"], "funFact": null },
+    { "symbol": "Rb", "name": "rubidium",  "atomicNumber": 37, "aliases": ["rub idiom"], "funFact": null },
+    { "symbol": "Sr", "name": "strontium", "atomicNumber": 38, "aliases": ["strong ium"], "funFact": null },
+    { "symbol": "Pd", "name": "palladium", "atomicNumber": 46, "aliases": ["paladin", "pall idiom"], "funFact": null },
+    {
+      "symbol": "Ag",
+      "name": "silver",
+      "atomicNumber": 47,
+      "aliases": [],
+      "funFact": "Symbol comes from the Latin 'argentum,' meaning 'shiny' or 'white.' Argentina, the country, is also named from this word."
+    },
+    { "symbol": "Cd", "name": "cadmium",   "atomicNumber": 48, "aliases": [], "funFact": null },
+    {
+      "symbol": "Sn",
+      "name": "tin",
+      "atomicNumber": 50,
+      "aliases": ["ten", "teen"],
+      "funFact": "Symbol comes from the Latin 'stannum.' Tin has been used since the Bronze Age — bronze is an alloy of copper and tin."
+    },
+    {
+      "symbol": "Sb",
+      "name": "antimony",
+      "atomicNumber": 51,
+      "aliases": ["anti money", "anti mony"],
+      "funFact": "Symbol comes from the Latin 'stibium,' from the Greek 'stibi' — a reference to the mineral stibnite (Sb₂S₃), used as ancient eyeliner."
+    },
+    { "symbol": "I",  "name": "iodine",    "atomicNumber": 53, "aliases": ["I dine", "I o dine"], "funFact": null },
+    { "symbol": "Xe", "name": "xenon",     "atomicNumber": 54, "aliases": ["see non", "zen on"], "funFact": null },
+    { "symbol": "Cs", "name": "cesium",    "atomicNumber": 55, "aliases": ["see z um", "seize ium", "caesium"], "funFact": null },
+    { "symbol": "Ba", "name": "barium",    "atomicNumber": 56, "aliases": ["bury him", "barry um"], "funFact": null },
+    { "symbol": "Pt", "name": "platinum",  "atomicNumber": 78, "aliases": [], "funFact": null },
+    {
+      "symbol": "Au",
+      "name": "gold",
+      "atomicNumber": 79,
+      "aliases": ["bold", "cold", "goled"],
+      "funFact": "Symbol comes from the Latin 'aurum,' meaning 'shining dawn.' This is the root of the word 'aureate' (golden)."
+    },
+    {
+      "symbol": "Hg",
+      "name": "mercury",
+      "atomicNumber": 80,
+      "aliases": ["mercy"],
+      "funFact": "Symbol comes from the Latin 'hydrargyrum,' meaning 'liquid silver.' Mercury is the only metal that is liquid at standard room temperature."
+    },
+    {
+      "symbol": "Pb",
+      "name": "lead",
+      "atomicNumber": 82,
+      "aliases": ["led", "lid"],
+      "funFact": "Symbol comes from the Latin 'plumbum,' which is also the root of the word 'plumbing' — ancient Roman pipes were made from lead."
+    },
+    { "symbol": "Bi", "name": "bismuth",   "atomicNumber": 83, "aliases": ["bis muth", "biz muth"], "funFact": null },
+    { "symbol": "Rn", "name": "radon",     "atomicNumber": 86, "aliases": ["ray don"], "funFact": null },
+    { "symbol": "Fr", "name": "francium",  "atomicNumber": 87, "aliases": ["france ium"], "funFact": null },
+    { "symbol": "Ra", "name": "radium",    "atomicNumber": 88, "aliases": ["radius", "radio m"], "funFact": null },
+    { "symbol": "Th", "name": "thorium",   "atomicNumber": 90, "aliases": ["for ium", "thor ium"], "funFact": null },
+    { "symbol": "U",  "name": "uranium",   "atomicNumber": 92, "aliases": ["your anium"], "funFact": null },
+    { "symbol": "Pu", "name": "plutonium", "atomicNumber": 94, "aliases": ["pluto nium"], "funFact": null }
+  ]
 }

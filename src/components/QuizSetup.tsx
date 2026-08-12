@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { AssessmentMode } from '@/lib/questions';
+import { CORE_ELEMENT_COUNT } from '@/lib/questions';
+import type { ElementScope } from '@/lib/questions';
 import elementsData from '@/data/elements.json';
 import ionsData from '@/data/ions.json';
 
@@ -14,6 +16,8 @@ export interface QuizConfig {
   voiceMode: boolean;
   /** Max questions per attempt — null means all */
   questionLimit: number | null;
+  /** Which elements to include (element quiz only) */
+  elementScope?: ElementScope;
   ionCategories?: {
     cations: boolean;
     monoatomicAnions: boolean;
@@ -35,17 +39,40 @@ export default function QuizSetup({ quizType, onStart, onBack }: QuizSetupProps)
   const [mode, setMode] = useState<AssessmentMode | null>(null);
   const [voiceMode, setVoiceMode] = useState(true);
   const [questionLimit, setQuestionLimit] = useState<number | null>(20);
+  const [elementScope, setElementScope] = useState<ElementScope>('first20');
+  const [showElementList, setShowElementList] = useState(false);
   const [ionCategories, setIonCategories] = useState({
     cations: true,
     monoatomicAnions: true,
     polyatomicAnions: false,
   });
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  // Open/close the native <dialog> when state changes
+  useEffect(() => {
+    const dlg = dialogRef.current;
+    if (!dlg) return;
+    if (showElementList && !dlg.open) {
+      dlg.showModal();
+    } else if (!showElementList && dlg.open) {
+      dlg.close();
+    }
+  }, [showElementList]);
+
+  // Element counts
+  const expandedCount = elementsData.elements.length - CORE_ELEMENT_COUNT;
+  const scopeElementCount =
+    elementScope === 'first20'
+      ? CORE_ELEMENT_COUNT
+      : elementScope === 'expanded'
+        ? expandedCount
+        : elementsData.elements.length;
 
   // Compute total question count based on quiz type and selections
   // Element quiz generates 2 questions per element (symbol + atomic number)
   const questionCount =
     quizType === 'element'
-      ? elementsData.elements.length * 2
+      ? scopeElementCount * 2
       : (ionCategories.cations ? ionsData.cations.length : 0) +
         (ionCategories.monoatomicAnions ? ionsData.monoatomicAnions.length : 0) +
         (ionCategories.polyatomicAnions ? ionsData.polyatomicAnions.length : 0);
@@ -55,17 +82,28 @@ export default function QuizSetup({ quizType, onStart, onBack }: QuizSetupProps)
   const handleStart = () => {
     if (!mode) return;
     const config: QuizConfig = { mode, voiceMode, questionLimit };
+    if (quizType === 'element') {
+      config.elementScope = elementScope;
+    }
     if (quizType === 'ion') {
       config.ionCategories = ionCategories;
     }
     onStart(config);
   };
 
+  // Elements to show in the View List dialog
+  const scopedElements =
+    elementScope === 'first20'
+      ? elementsData.elements.slice(0, CORE_ELEMENT_COUNT)
+      : elementScope === 'expanded'
+        ? elementsData.elements.slice(CORE_ELEMENT_COUNT)
+        : elementsData.elements;
+
   const title = quizType === 'element' ? 'Element Quiz' : 'Ion Quiz';
   const description =
     quizType === 'element'
-      ? 'Test your knowledge of the first 20 elements. You’ll be shown a symbol or atomic number and asked to name the element.'
-      : 'Test your knowledge of common ions. You’ll be shown an ion name and asked for its charge or formula.';
+      ? "Test your knowledge of the elements. You'll be shown a symbol or atomic number and asked to name the element."
+      : "Test your knowledge of common ions. You'll be shown an ion name and asked for its charge or formula.";
 
   const toggleCategory = (key: keyof typeof ionCategories) => {
     setIonCategories((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -91,6 +129,105 @@ export default function QuizSetup({ quizType, onStart, onBack }: QuizSetupProps)
           {description}
         </p>
       </div>
+
+      {/* Element scope selector (element quiz only) */}
+      {quizType === 'element' && (
+        <div className="mb-6">
+          <h2 className="text-xs font-semibold text-[var(--color-chem-text-muted)] uppercase tracking-wide mb-3">
+            Element Set
+          </h2>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { value: 'first20' as const, label: 'First 20' },
+              { value: 'expanded' as const, label: 'Expanded' },
+              { value: 'all' as const, label: 'All' },
+            ]).map(({ value, label }) => {
+              const isSelected = elementScope === value;
+              const count =
+                value === 'first20'
+                  ? CORE_ELEMENT_COUNT
+                  : value === 'expanded'
+                    ? expandedCount
+                    : elementsData.elements.length;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setElementScope(value)}
+                  className={`py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                    isSelected
+                      ? 'bg-[var(--color-chem-primary)] text-white shadow-md'
+                      : 'bg-[var(--color-chem-surface)] border border-[var(--color-chem-border)] text-[var(--color-chem-text)] hover:border-[var(--color-chem-primary)]'
+                  }`}
+                >
+                  {label}
+                  <span className={`block text-xs font-normal mt-0.5 ${isSelected ? 'text-white/80' : 'text-[var(--color-chem-text-muted)]'}`}>
+                    {count} elements
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="text-center mt-2">
+            <button
+              type="button"
+              onClick={() => setShowElementList(true)}
+              className="text-xs font-medium text-[var(--color-chem-primary)] hover:text-[var(--color-chem-primary-dark)] underline underline-offset-2 transition-colors"
+            >
+              View element list
+            </button>
+          </div>
+
+          {/* Element list dialog */}
+          <dialog
+            ref={dialogRef}
+            onClose={() => setShowElementList(false)}
+            className="w-full max-w-sm rounded-2xl border border-[var(--color-chem-border)] bg-[var(--color-chem-surface)] p-0 shadow-xl backdrop:bg-black/40"
+          >
+            <div className="flex items-center justify-between p-4 border-b border-[var(--color-chem-border)]">
+              <h3 className="font-semibold text-[var(--color-chem-text)]">
+                {elementScope === 'first20'
+                  ? 'First 20 Elements'
+                  : elementScope === 'expanded'
+                    ? 'Expanded Elements'
+                    : 'All Elements'}{' '}
+                <span className="text-sm font-normal text-[var(--color-chem-text-muted)]">
+                  ({scopedElements.length})
+                </span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowElementList(false)}
+                className="text-[var(--color-chem-text-muted)] hover:text-[var(--color-chem-text)] text-lg leading-none px-1"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="overflow-y-auto max-h-[60vh] p-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-[var(--color-chem-text-muted)] uppercase tracking-wide">
+                    <th className="pb-2 pr-3 w-10">#</th>
+                    <th className="pb-2 pr-3 w-16">Symbol</th>
+                    <th className="pb-2">Name</th>
+                  </tr>
+                </thead>
+                <tbody className="text-[var(--color-chem-text)]">
+                  {scopedElements.map((el) => (
+                    <tr key={el.symbol} className="border-t border-[var(--color-chem-border)]/50">
+                      <td className="py-1.5 pr-3 text-[var(--color-chem-text-muted)] tabular-nums">
+                        {el.atomicNumber}
+                      </td>
+                      <td className="py-1.5 pr-3 font-semibold">{el.symbol}</td>
+                      <td className="py-1.5 capitalize">{el.name}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </dialog>
+        </div>
+      )}
 
       {/* Assessment mode selector */}
       <div className="mb-6">

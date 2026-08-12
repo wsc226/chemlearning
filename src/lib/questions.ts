@@ -138,14 +138,30 @@ function formatIonSymbol(formula: string, charge: number): string {
 // Element questions
 // ---------------------------------------------------------------------------
 
+/** Number of elements in the core (first-20) tier. */
+export const CORE_ELEMENT_COUNT = 20;
+
+export type ElementScope = 'first20' | 'expanded' | 'all';
+
 /**
  * Generate element-name questions from the elements data.
  *
  * For each element, creates BOTH a symbol-prompt question and an atomic-number-prompt
  * question to maximize practice. The full set is shuffled before returning.
+ *
+ * @param scope — which elements to include:
+ *   'first20'  → H–Ca (indices 0–19)
+ *   'expanded' → elements beyond the first 20 (indices 20+)
+ *   'all'      → everything
  */
-export function generateElementQuestions(): Question[] {
-  const elements: ElementRecord[] = elementsData.elements;
+export function generateElementQuestions(scope: ElementScope = 'first20'): Question[] {
+  const all: ElementRecord[] = elementsData.elements;
+  const elements =
+    scope === 'first20'
+      ? all.slice(0, CORE_ELEMENT_COUNT)
+      : scope === 'expanded'
+        ? all.slice(CORE_ELEMENT_COUNT)
+        : all;
   const questions: Question[] = [];
 
   for (const el of elements) {

@@ -11,6 +11,7 @@ import {
   generateIonFormulaQuestions,
 } from '@/lib/questions';
 import type { Question, AssessmentMode } from '@/lib/questions';
+import elementsData from '@/data/elements.json';
 
 type View =
   | { screen: 'home' }
@@ -26,7 +27,7 @@ export default function Home() {
       let title = '';
 
       if (quizType === 'element') {
-        questions = generateElementQuestions();
+        questions = generateElementQuestions(config.elementScope ?? 'first20');
         title = 'Element Quiz';
       } else {
         const cats = config.ionCategories ?? {
@@ -114,7 +115,7 @@ export default function Home() {
               <div className="flex items-center justify-between gap-2">
                 <h2 className="text-lg font-semibold text-chem-text">Element Quiz</h2>
                 <span className="shrink-0 rounded-full bg-chem-primary/15 px-2.5 py-0.5 text-xs font-medium text-chem-primary">
-                  20 elements
+                  {elementsData.elements.length} elements
                 </span>
               </div>
               <p className="text-sm text-chem-text-muted mt-1">

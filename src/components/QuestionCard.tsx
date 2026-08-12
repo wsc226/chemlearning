@@ -21,6 +21,25 @@ interface QuestionCardProps {
 type VoiceState = 'mic' | 'listening' | 'input';
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Bold + underline the key action words in the instruction text. */
+function formatInstruction(text: string): React.ReactNode {
+  const keywords = /\b(Name|name|charge|formula)\b/;
+  const parts = text.split(keywords);
+  return parts.map((part, i) =>
+    keywords.test(part) ? (
+      <strong key={i} className="underline underline-offset-2">
+        {part}
+      </strong>
+    ) : (
+      part
+    ),
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -187,11 +206,19 @@ export default function QuestionCard({
         <div className="text-xs font-semibold text-[var(--color-chem-text-muted)] uppercase tracking-wide mb-2">
           {question.promptLabel}
         </div>
-        <div className="text-5xl font-bold text-[var(--color-chem-text)] text-center py-6">
+        <div
+          className={`font-bold text-[var(--color-chem-text)] text-center py-6 ${
+            question.prompt.length > 12
+              ? 'text-2xl'
+              : question.prompt.length > 6
+                ? 'text-4xl'
+                : 'text-5xl'
+          }`}
+        >
           {question.prompt}
         </div>
-        <p className="text-sm text-[var(--color-chem-text-muted)] text-center mb-4">
-          {question.instruction}
+        <p className="text-base text-[var(--color-chem-text)] text-center mb-4">
+          {formatInstruction(question.instruction)}
         </p>
         <div className="flex justify-center">
           <button

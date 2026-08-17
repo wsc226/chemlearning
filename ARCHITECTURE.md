@@ -194,8 +194,36 @@ v1 is a plain web app (not a wrapped native app), this points toward a standard 
 (e.g. Google AdSense) rather than a mobile ad SDK (e.g. AdMob) — simpler integration, consistent
 with the web-first platform choice. Revisit when ready.
 
+## Future roadmap (v2+)
+
+Not scoped for MVP — captured here so ideas don't get lost between sessions.
+
+- **AI-graded modules**: naturalization interview practice and open-ended academic short-answer
+  assessment. These are the modules that actually need the `gradeAnswer` AI layer (Gemini
+  BYOK / DeepSeek-Qwen paid tier) described above — none of the deterministic chemistry quizzes
+  need it.
+- **PES (photoelectron spectroscopy) diagram quiz**: show a PES diagram, student names the
+  element from the peak pattern. Rather than storing pre-made diagram images, generate the
+  diagram client-side (SVG/canvas bar chart) from each element's electron configuration —
+  peak positions/heights follow directly from subshell structure, so this is a derived view of
+  `elements.json` data, not a new hand-authored content type.
+- **Noble gas electron configuration quiz (multiple choice)**: show a noble-gas-notation
+  configuration (e.g. "[Ne] 3s² 3p⁴"), student picks the matching element from ~4 options.
+  Multiple choice is actually the most dictation-reliable format available — the spoken answer
+  is one of a handful of known short tokens ("A"/"B"/"C"/"D" or the option text), lower
+  misrecognition risk than any free-recall format. Good default pattern for future question
+  types where free recall doesn't add real pedagogical value.
+- **B2B classroom licensing** (primary revenue path): org/admin account layer with a student
+  roster and a simple per-student progress table (student, quiz, score, date) — the actual
+  differentiator over free consumer tools. License-gated: paying orgs never see ads. Lightweight
+  shared classroom access code rather than full multi-user auth for v1 of this tier. Target price
+  ~$199-249/year per classroom (up to 25-30 students), anchored between Kahoot/Quizlet-style
+  individual tools and IXL-style full-curriculum platforms. Go-to-market: pilot with William's
+  own learning center first, then sell direct to a handful of peer tutoring centers before
+  building any self-serve billing.
+- **Consumer free tier with ads**: deferred until the B2B path is proven — not required to reach
+  first paying customers, so not on the critical path for MVP.
+
 ## Open items
 
-- First-20-elements list (William providing).
-- Ion list for high-school/AP scope (William sending screenshot).
 - Reaction-type question content (specific equations for each of the 5 types × 2 levels).

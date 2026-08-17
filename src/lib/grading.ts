@@ -119,7 +119,8 @@ export function gradeElementAnswer(
 // ---------------------------------------------------------------------------
 
 const SIGN_WORDS_POSITIVE = new Set(['plus', 'positive']);
-const SIGN_WORDS_NEGATIVE = new Set(['minus', 'negative']);
+// "minutes" is a common SR mishearing of "minus" (e.g. "SO3 2 minutes")
+const SIGN_WORDS_NEGATIVE = new Set(['minus', 'minutes', 'negative']);
 
 /**
  * Parse a spoken charge answer from a transcript.
@@ -272,7 +273,9 @@ function buildAcceptedAnswers(formula: string, charge: number): Set<string> {
   const fl = formula.toLowerCase();
   const magnitude = Math.abs(charge);
   const signWords =
-    charge > 0 ? ['plus', 'positive'] : ['minus', 'negative'];
+    charge > 0
+      ? [...SIGN_WORDS_POSITIVE]
+      : [...SIGN_WORDS_NEGATIVE];
   const accepted = new Set<string>();
 
   for (const sw of signWords) {

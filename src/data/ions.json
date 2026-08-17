@@ -37,8 +37,8 @@
     { "name": "Iron (III) ion",     "formula": "Fe", "charge": 3, "group": "transition (variable charge)" },
     { "name": "Lead (II) ion",      "formula": "Pb", "charge": 2, "group": "transition/post-transition (variable charge)" },
     { "name": "Lead (IV) ion",      "formula": "Pb", "charge": 4, "group": "transition/post-transition (variable charge)" },
-    { "name": "Manganese (II) ion", "formula": "Mn", "charge": 2, "group": "transition (variable charge)", "aliases": ["megan needs 2 ion", "megan needs two ion", "mango knees 2 ion"] },
-    { "name": "Manganese (IV) ion", "formula": "Mn", "charge": 4, "group": "transition (variable charge)", "aliases": ["megan needs 4 ion", "megan needs four ion", "mango knees 4 ion"] },
+    { "name": "Manganese (II) ion", "formula": "Mn", "charge": 2, "group": "transition (variable charge)", "aliases": ["megan needs 2 ion", "megan needs two ion", "mango knees 2 ion", "making these 2 ion", "making these two ion"] },
+    { "name": "Manganese (IV) ion", "formula": "Mn", "charge": 4, "group": "transition (variable charge)", "aliases": ["megan needs 4 ion", "megan needs four ion", "mango knees 4 ion", "making these 4 ion", "making these four ion"] },
     {
       "name": "Mercury (I) ion", "formula": "Hg2", "charge": 2, "group": "transition (variable charge)",
       "funFact": "The classic memorization trap: mercury(I) isn't a single Hg+ ion, it's a diatomic pair Hg2^2+ — two mercury atoms bonded together sharing an overall 2+ charge."

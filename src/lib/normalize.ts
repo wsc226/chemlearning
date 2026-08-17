@@ -58,6 +58,33 @@ export function normalizeNumberWords(text: string): string {
   });
 }
 
+// Spoken number words (magnitudes 1-9 cover all charges we quiz on) and sign words,
+// used to split SR output that runs two words together with no space in between
+// (e.g. "OnePlus" transcribed as a single word instead of "one" + "plus").
+const NUMBER_WORD_ALTERNATION =
+  'zero|one|won|two|to|too|three|four|for|fore|five|six|seven|eight|nine';
+const SIGN_WORD_ALTERNATION = 'plus|positive|minus|minutes|negative';
+const NUMBER_THEN_SIGN = new RegExp(
+  `\\b(${NUMBER_WORD_ALTERNATION})(${SIGN_WORD_ALTERNATION})\\b`,
+  'g',
+);
+const SIGN_THEN_NUMBER = new RegExp(
+  `\\b(${SIGN_WORD_ALTERNATION})(${NUMBER_WORD_ALTERNATION})\\b`,
+  'g',
+);
+
+/**
+ * Inserts a space between a spoken number word and a sign word when SR
+ * concatenates them into a single token (e.g. "oneplus" -> "one plus").
+ * Must run before normalizeNumberWords so the split number word still gets
+ * converted to a digit.
+ */
+function splitConcatenatedNumberSign(text: string): string {
+  return text
+    .replace(NUMBER_THEN_SIGN, '$1 $2')
+    .replace(SIGN_THEN_NUMBER, '$1 $2');
+}
+
 /**
  * Full normalization pipeline:
  *   lowercase -> trim -> strip punctuation (keep hyphens) -> collapse whitespace -> number word substitution
@@ -70,6 +97,10 @@ export function normalize(text: string): string {
 
   // Collapse runs of whitespace into a single space.
   result = result.replace(/\s+/g, ' ').trim();
+
+  // Split concatenated number+sign words (e.g. "oneplus" -> "one plus")
+  // before substituting number words, so both halves resolve correctly.
+  result = splitConcatenatedNumberSign(result);
 
   // Substitute spoken number words with digits.
   result = normalizeNumberWords(result);

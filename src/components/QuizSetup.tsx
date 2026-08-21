@@ -68,11 +68,18 @@ export default function QuizSetup({ quizType, onStart, onBack }: QuizSetupProps)
         ? expandedCount
         : elementsData.elements.length;
 
-  // Compute total question count based on quiz type and selections
-  // Element quiz generates 2 questions per element (symbol + atomic number)
+  // Compute total question count based on quiz type and selections.
+  // Core (first-20) elements generate 2 questions each (symbol + atomic
+  // number); expanded-set elements generate 1 (symbol only).
+  const elementQuestionCount =
+    elementScope === 'first20'
+      ? CORE_ELEMENT_COUNT * 2
+      : elementScope === 'expanded'
+        ? expandedCount
+        : CORE_ELEMENT_COUNT * 2 + expandedCount;
   const questionCount =
     quizType === 'element'
-      ? scopeElementCount * 2
+      ? elementQuestionCount
       : (ionCategories.cations ? ionsData.cations.length : 0) +
         (ionCategories.monoatomicAnions ? ionsData.monoatomicAnions.length : 0) +
         (ionCategories.polyatomicAnions ? ionsData.polyatomicAnions.length : 0);

@@ -146,8 +146,12 @@ export type ElementScope = 'first20' | 'expanded' | 'all';
 /**
  * Generate element-name questions from the elements data.
  *
- * For each element, creates BOTH a symbol-prompt question and an atomic-number-prompt
- * question to maximize practice. The full set is shuffled before returning.
+ * Core (first-20) elements get BOTH a symbol-prompt question and an
+ * atomic-number-prompt question, to maximize practice on the set students
+ * are expected to memorize by number. Expanded-set elements (beyond the
+ * first 20) get symbol-prompt questions only — atomic number isn't part
+ * of what's being quizzed for that tier. The full set is shuffled before
+ * returning.
  *
  * @param scope — which elements to include:
  *   'first20'  → H–Ca (indices 0–19)
@@ -165,6 +169,8 @@ export function generateElementQuestions(scope: ElementScope = 'first20'): Quest
   const questions: Question[] = [];
 
   for (const el of elements) {
+    const isCore = el.atomicNumber <= CORE_ELEMENT_COUNT;
+
     // Symbol-prompt: show "Na" → answer "sodium"
     questions.push({
       id: `element-symbol-${el.symbol.toLowerCase()}`,
@@ -178,18 +184,20 @@ export function generateElementQuestions(scope: ElementScope = 'first20'): Quest
       speakText: `What element has the symbol ${el.symbol.split('').join(' ')}?`,
     });
 
-    // Atomic-number-prompt: show "11" → answer "sodium"
-    questions.push({
-      id: `element-number-${el.atomicNumber}`,
-      type: 'element_name',
-      prompt: String(el.atomicNumber),
-      promptLabel: 'Atomic Number',
-      instruction: 'Name this element',
-      correctDisplay: el.name.charAt(0).toUpperCase() + el.name.slice(1),
-      grade: (answer: string) => gradeElementAnswer(answer, el),
-      funFact: el.funFact ?? undefined,
-      speakText: `What element has atomic number ${el.atomicNumber}?`,
-    });
+    // Atomic-number-prompt (core elements only): show "11" → answer "sodium"
+    if (isCore) {
+      questions.push({
+        id: `element-number-${el.atomicNumber}`,
+        type: 'element_name',
+        prompt: String(el.atomicNumber),
+        promptLabel: 'Atomic Number',
+        instruction: 'Name this element',
+        correctDisplay: el.name.charAt(0).toUpperCase() + el.name.slice(1),
+        grade: (answer: string) => gradeElementAnswer(answer, el),
+        funFact: el.funFact ?? undefined,
+        speakText: `What element has atomic number ${el.atomicNumber}?`,
+      });
+    }
   }
 
   return shuffleArray(questions);
